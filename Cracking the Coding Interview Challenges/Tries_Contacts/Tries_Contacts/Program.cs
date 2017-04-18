@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -11,117 +12,89 @@ namespace Tries_Contacts
 		static void Main(string[] args)
 		{
 			int n = Convert.ToInt32(Console.ReadLine());
-			for (int a0 = 0; a0 < n; a0++)
+		    var book = new ContactsTrie();
+
+            for (int a0 = 0; a0 < n; a0++)
 			{
 				string[] tokens_op = Console.ReadLine().Split(' ');
 				string op = tokens_op[0];
 				string contact = tokens_op[1];
+
+			    if (op == "add")
+			    {
+			        book.Add(contact);
+			    }
+                else if (op == "find")
+			    {
+			        var count = book.SearchPrefix(contact);
+                    Console.WriteLine(count);
+			    }
+			    else
+			    {
+			        throw new Exception($"Unsupported operation [{op}]");
+			    }
 			}
-		}
-	}
-	public class Node
-	{
-		public char Value { get; set; }
-		public List<Node> Children { get; set; }
-		public Node Parent { get; set; }
-		public int Depth { get; set; }
 
-		public Node(char value, int depth, Node parent)
-		{
-			Value = value;
-			Children = new List<Node>();
-			Depth = depth;
-			Parent = parent;
-		}
+		    Console.ReadLine();
 
-		public bool IsLeaf()
-		{
-			return Children.Count == 0;
-		}
-
-		public Node FindChildNode(char c)
-		{
-			foreach (var child in Children)
-				if (child.Value == c)
-					return child;
-
-			return null;
-		}
-
-		public void DeleteChildNode(char c)
-		{
-			for (var i = 0; i < Children.Count; i++)
-				if (Children[i].Value == c)
-					Children.RemoveAt(i);
 		}
 	}
 
-	public class Trie
-	{
-		private readonly Node _root;
 
-		public Trie()
-		{
-			_root = new Node('^', 0, null);
-		}
+    public class LetterNode
+    {
+        public List<LetterNode> Children { get; set; }
+        public char Letter { get; set; }
+        public int Count { get; set; }
+        public LetterNode(char letter)
+        {
+            Children = new List<LetterNode>();
+            Letter = letter;
+        }
 
-		public Node Prefix(string s)
-		{
-			var currentNode = _root;
-			var result = currentNode;
+        public LetterNode GetChild(char c)
+        {
+            return Children.SingleOrDefault(x => x.Letter == c);
+        }
+    }
 
-			foreach (var c in s)
-			{
-				currentNode = currentNode.FindChildNode(c);
-				if (currentNode == null)
-					break;
-				result = currentNode;
-			}
+    public class ContactsTrie
+    {
+        private LetterNode _root;
+        public ContactsTrie()
+        {
+            _root = new LetterNode('@');
+        }
+        public void Add(string name)
+        {
+            var nodePointer = _root;
+            foreach (var letter in name)
+            {
+                var nextNode = nodePointer.GetChild(letter);
+                if (nextNode == null)
+                {
+                    nextNode = new LetterNode(letter);
+                    nodePointer.Children.Add(nextNode);
+                }
+                nextNode.Count += 1;
+                nodePointer = nextNode;
+            }
+        }
 
-			return result;
-		}
+        public int SearchPrefix(string prefix)
+        {
+            var nodePointer = _root;
 
-		public bool Search(string s)
-		{
-			var prefix = Prefix(s);
-			return prefix.Depth == s.Length && prefix.FindChildNode('$') != null;
-		}
-
-		public void InsertRange(List<string> items)
-		{
-			for (int i = 0; i < items.Count; i++)
-				Insert(items[i]);
-		}
-
-		public void Insert(string s)
-		{
-			var commonPrefix = Prefix(s);
-			var current = commonPrefix;
-
-			for (var i = current.Depth; i < s.Length; i++)
-			{
-				var newNode = new Node(s[i], current.Depth + 1, current);
-				current.Children.Add(newNode);
-				current = newNode;
-			}
-
-			current.Children.Add(new Node('$', current.Depth + 1, current));
-		}
-
-		public void Delete(string s)
-		{
-			if (Search(s))
-			{
-				var node = Prefix(s).FindChildNode('$');
-
-				while (node.IsLeaf())
-				{
-					var parent = node.Parent;
-					parent.DeleteChildNode(node.Value);
-					node = parent;
-				}
-			}
-		}
-
-	}
+            foreach (var letter in prefix)
+            {
+                var nextNode = nodePointer.GetChild(letter);
+                if (nextNode == null)
+                {
+                    return 0;
+                }
+                nodePointer = nextNode;
+            }
+            return nodePointer.Count;
+        }
+    }
 }
