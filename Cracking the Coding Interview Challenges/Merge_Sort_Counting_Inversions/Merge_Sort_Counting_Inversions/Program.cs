@@ -23,18 +23,18 @@ namespace Merge_Sort_Counting_Inversions
 
 		}
 
-		private static int MergeSort(int[] arr)
+		private static long MergeSort(int[] arr)
 		{
 			return MergeSort(arr, new int[arr.Length], 0, arr.Length - 1);
 		}
 
-		public static int MergeSort(int[] array, int[] tmp, int leftStart, int rightEnd)
+		public static long MergeSort(int[] array, int[] tmp, int leftStart, int rightEnd)
 		{
 			if (leftStart >= rightEnd)
 				return 0;
 			
 			var mid = (leftStart + rightEnd) / 2;
-			int count = 0;
+			long count = 0;
 			count += MergeSort(array, tmp, leftStart, mid);
 			count += MergeSort(array, tmp, mid + 1, rightEnd);
 
@@ -50,21 +50,23 @@ namespace Merge_Sort_Counting_Inversions
 			{
 				if (array[l] <= array[r])
 				{
-					tmp[i] = array[i];
+					tmp[i] = array[l];
 					l++;
-				}
+                    
+                }
 				else
 				{
 					tmp[i] = array[r];
 					r++;
-				}
+                    count += mid - l + 1;
+                }
 
 				i++;
 			}
 			Array.Copy(array, l, tmp, i, leftEnd - l + 1);
 			Array.Copy(array, r, tmp, i, rightEnd - r + 1);
 			Array.Copy(tmp, leftStart, array, leftStart, rightEnd - leftStart + 1);
-			count += mid + 1 - i;
+			
 			return count;
 		}
 	}
